@@ -13,8 +13,7 @@ export default function Quiz() {
     const [numCorrectAnswers, setNumCorrectAnswers] = useState(0);
     
 
-    useEffect(() => {
-        console.log('Hello');
+    function fetchData() {
         axios.get('https://opentdb.com/api.php?amount=10&category=10&type=multiple&encode=base64')
         .then(res => {
             const answers = [];
@@ -28,7 +27,7 @@ export default function Quiz() {
                 })
                 optionsData.push({id: id, options:[result.correct_answer, 
                     ...result.incorrect_answers]})
-                userAnswers.push({id: id, option: ''});
+                // userAnswers.push({id: id, option: ''});
                 return answers.push({id: id, option: result.correct_answer});
             })
             
@@ -45,6 +44,10 @@ export default function Quiz() {
             setQuestions(questionsData);
             setCorrectAnswers(answers);
         })
+    }
+
+    useEffect(() => {       
+        fetchData();
     }, []);
 
     function handleUserSelection(event,id) {
@@ -54,9 +57,7 @@ export default function Quiz() {
                     return oldOptions.id === id ? 
                         {...oldOptions, options: oldOptions.options.map(option => { 
                             const decodedOption = atob(option.option);
-                            setUserAnswers(oldUserAnswers => oldUserAnswers.map(oldUserAnswer => {
-                                return oldUserAnswer.id === id  ? {...oldUserAnswer, option: btoa(event.target.value)} : oldUserAnswer
-                            }))
+                            setUserAnswers(oldUserAnswers => [...oldUserAnswers, {id: id, option: btoa(event.target.value)}])
                             return decodedOption === event.target.value ? 
                                 {...option, isSelected: !option.isSelected} : {...option, isSelected: false};
                         })}
@@ -69,6 +70,7 @@ export default function Quiz() {
     function checkAnswers() {
         if(quizEnded) {
             setUserAnswers([]); setOptions([]); setQuizEnded(false); setQuestions([]); setCorrectAnswers([]);
+            fetchData();
         }
         else {
             const allQuestionsAnswered = userAnswers.every(userAnswer => userAnswer.option);
@@ -82,10 +84,11 @@ export default function Quiz() {
             const questionId = userAnswer.id;
             const correctAnswer = correctAnswers.find(correctAnswer => correctAnswer.id === questionId);
             if(userAnswer.option.trim() === correctAnswer.option.trim()) {
+                numCorrect++;
+                console.log(numCorrect);
+                console.log(atob(correctAnswer.option), atob(userAnswer.option));
                 setOptions(oldOptions => oldOptions.map(oldOption => {
                     if(oldOption.id === questionId) {
-                        numCorrect++;
-                        console.log(numCorrect)
                         return {...oldOption, answeredCorrect: true};
                     }
                     return oldOption;
@@ -104,8 +107,6 @@ export default function Quiz() {
                 }))
             }
         })
-        setNumCorrectAnswers(numCorrect)
-
         setQuizEnded(true);
     }
 
@@ -128,7 +129,7 @@ export default function Quiz() {
                 })
             }
             <div className="quiz-page--button-container">
-                {quizEnded && `You answered ${numCorrectAnswers}/10 answers questions correctly`}
+                {/* {quizEnded && `You answered ${numCorrectAnswers}/10 answers questions correctly`} */}
                 <button className='btn btn-check' onClick={checkAnswers}>{quizEnded ? 'Play Again' : 'Check Anwers'}</button>
             </div>
         </section>
