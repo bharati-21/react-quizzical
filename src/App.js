@@ -1,6 +1,7 @@
 import './App.css';
 import {useState} from 'react';
 import IntroPage from './components/IntroPage';
+import Quiz from './components/Quiz';
 
 function App() {
   const [startQuiz, setStartQuiz] = useState(false);
@@ -13,7 +14,9 @@ function App() {
     <main className="main">
       {
         startQuiz ? 
-        <div className='section-wrapper'></div>
+        <div className='section-wrapper'>
+          <Quiz />
+        </div>
         :
         <div className='section-wrapper'>
           <IntroPage startQuizHandler={changeQuizState} />
