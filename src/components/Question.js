@@ -1,11 +1,26 @@
 export default function Question(props) {
-    const {question, options, id} = props; 
+    const {question, id, handleUserSelection, options, quizEnded} = props; 
+    
+   
+    let questionClassNames = 'question';
+    if(quizEnded) {
+        if(options.answeredCorrect) {
+            questionClassNames+=' answered-correct';
+        }
+        else questionClassNames+= ' answered-incorrect';
+    }
+
     return (
-        <article className="question" id={id}>
+        <article className={questionClassNames} id={id} onClick={handleUserSelection}>
             <h2 className="question--text">{atob(question.toString())}</h2>
             <div className="question--options-container">
                 {
-                    options.map(option => <button className="option" key={`${id}-${option}`}>{atob(option)}</button>)
+                    
+                    options.options.map((option,index) => {
+
+                        
+                        return <button className={`option ${quizEnded && option.correctAnswer ? 'correct-answer' : option.incorrectAnswer ? 'incorrect-answer' :''} ${option.isSelected ? 'selected' : ''}`} key={`${id}-${index}`} value={atob(option.option)}>{atob(option.option)}</button>
+                    })
                 }
             </div>
         </article>

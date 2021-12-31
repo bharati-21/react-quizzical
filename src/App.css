@@ -3,6 +3,8 @@
     --secondary-color: #4D5B9E;
     --background-color: #F5F7FB;
     --user-selected-option: #D6DBF5;
+    --correct-answer-bg: #94D7A2;
+    --incorrect-answer-bg: #F8BCBC;
 }
 
 html {
@@ -135,6 +137,19 @@ main {
 .option.selected {
     background: var(--user-selected-option);
 }
+
+.question.answered-correct .option.selected {
+    background-color: var(--correct-answer-bg) !important;
+}
+
+.question.answered-incorrect .option.correct-answer {
+    background-color: var(--correct-answer-bg) !important;
+}
+
+.question.answered-incorrect .option.selected {
+    background-color: var(--incorrect-answer-bg) !important;
+}
+
 
 .quiz-page--button-container {
     text-align: center;
