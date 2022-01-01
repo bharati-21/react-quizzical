@@ -34,6 +34,7 @@ body > * {
 main {
     min-height: 100vh;
     width: 100%;
+    margin: auto;
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -150,7 +151,16 @@ main {
     background-color: var(--incorrect-answer-bg) !important;
 }
 
-
 .quiz-page--button-container {
     text-align: center;
+}
+
+.quiz-ended-wrapper {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 1rem;
+    word-wrap:break-word;
+    padding: 1rem;
+    flex-wrap: wrap;
 }

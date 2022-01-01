@@ -2,6 +2,7 @@ import {useState, useEffect} from 'react';
 import axios from 'axios';
 import Question from './Question';
 import {nanoid} from 'nanoid';
+import CheckAnswers from './CheckAnswers';
 
 
 export default function Quiz() {
@@ -11,6 +12,7 @@ export default function Quiz() {
     const [correctAnswers, setCorrectAnswers] = useState([]);
     const [quizEnded, setQuizEnded] = useState(false);
     const [numCorrectAnswers, setNumCorrectAnswers] = useState(0);
+    
     
 
     function fetchData() {
@@ -69,45 +71,59 @@ export default function Quiz() {
 
     function checkAnswers() {
         if(quizEnded) {
-            setUserAnswers([]); setOptions([]); setQuizEnded(false); setQuestions([]); setCorrectAnswers([]);
+            setUserAnswers([]); 
+            setOptions([]);  
+            setQuizEnded(false); 
+            setQuestions([]); 
+            setCorrectAnswers([]);
             fetchData();
         }
         else {
             const allQuestionsAnswered = userAnswers.every(userAnswer => userAnswer.option);
-            allQuestionsAnswered ? check() : throwError();
+            if(allQuestionsAnswered) {
+                check();             
+            }
+            else throwError();
         }        
     }
 
     function check() {
-        let numCorrect = 0;
         userAnswers.forEach(userAnswer => {
-            const questionId = userAnswer.id;
-            const correctAnswer = correctAnswers.find(correctAnswer => correctAnswer.id === questionId);
-            if(userAnswer.option.trim() === correctAnswer.option.trim()) {
-                numCorrect++;
-                console.log(numCorrect);
-                console.log(atob(correctAnswer.option), atob(userAnswer.option));
-                setOptions(oldOptions => oldOptions.map(oldOption => {
-                    if(oldOption.id === questionId) {
-                        return {...oldOption, answeredCorrect: true};
-                    }
-                    return oldOption;
-                }))
-            }
-            else {
-                setOptions(oldOptions => oldOptions.map(oldOption => {
-                    return oldOption.id === questionId ? 
-                    {...oldOption, answeredCorrect: false, 
-                        options: oldOption.options.map(option => {
-                            return option.isSelected ? {...option, incorrectAnswer: true} :  
-                                option.option === correctAnswer.option ? {...option, correctAnswer: true} : option
-                        }) 
-                    }
-                    : oldOption
-                }))
-            }
-        })
-        setQuizEnded(true);
+            const id = userAnswer.id;
+            const correctAnswer = correctAnswers.find(answer => answer.id === id);
+           
+            const userOption = userAnswer.option;
+            const correctOption = correctAnswer.option;
+
+            const answeredCorrect = userOption.trim() === correctOption.trim();
+            
+            
+            setOptions(oldOptions => oldOptions.map(oldOption => {
+                return oldOption.id === id ? 
+                {
+                    ...oldOption, 
+                    answeredCorrect: answeredCorrect,
+                    options: answeredCorrect ? 
+                        oldOption.options : 
+                        oldOption.options.map(option => {
+                            return option.isSelected ? 
+                            {
+                                ...option, 
+                                incorrectAnswer: true
+                            } 
+                            : 
+                                option.option === correctOption ? 
+                                {
+                                    ...option, 
+                                    correctAnswer: true
+                                } 
+                                : option
+                        })
+                } 
+                : oldOption
+            }))           
+        })     
+        setQuizEnded(true);                     
     }
 
     function throwError() {
@@ -129,9 +145,13 @@ export default function Quiz() {
                 })
             }
             <div className="quiz-page--button-container">
-                {/* {quizEnded && `You answered ${numCorrectAnswers}/10 answers questions correctly`} */}
-                <button className='btn btn-check' onClick={checkAnswers}>{quizEnded ? 'Play Again' : 'Check Anwers'}</button>
-            </div>
+                {
+                    quizEnded ? 
+                        <CheckAnswers options={options} setNumCorrectAnswers={setNumCorrectAnswers} numCorrectAnswers={numCorrectAnswers} checkAnswers={checkAnswers}/> 
+                    : 
+                        questions.length > 0 && <button className='btn btn-check' onClick={checkAnswers}>Check Anwers</button>
+                }
+            </div> 
         </section>
     )
 }
