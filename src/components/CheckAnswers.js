@@ -16,7 +16,7 @@ export default function CheckAnswers(props) {
     return (
         <div className="quiz-ended-wrapper">
             <p className="score">You answered <strong>{numCorrectAnswers}/10</strong> questions correctly</p>
-            <button className='btn btn-check' onClick={props.checkAnswers}>Check Anwers</button>
+            <button className='btn btn-check' onClick={props.checkAnswers}>Retake Quiz</button>
         </div>
     )
 }
