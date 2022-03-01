@@ -8,6 +8,7 @@
 }
 
 html {
+    font-size: 100%;
     box-sizing: border-box;
 }
 
@@ -16,6 +17,8 @@ html {
     margin: 0;
     padding: 0;
     font-family: 'Karla', sans-serif;
+    word-wrap: break-word;
+    word-break: break-word;
 }
 
 body {
@@ -33,7 +36,7 @@ body > * {
 
 main {
     min-height: 100vh;
-    width: 100%;
+    max-width: 100%;
     margin: auto;
     display: flex;
     flex-direction: column;
@@ -84,6 +87,7 @@ main {
 .quiz-page {
     max-width: 750px;
     padding: 1rem;
+    margin: 0 auto;
 }
 
 .question {
@@ -163,4 +167,69 @@ main {
     word-wrap:break-word;
     padding: 1rem;
     flex-wrap: wrap;
+}
+
+.modal {
+    position: fixed;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    z-index: 2;
+    background-color: rgba(0,0,0,0.5);
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    padding: 1rem;
+}
+
+.modal-content {
+    background-color:var(--background-color);
+    font-weight: bold;
+    min-width: 150px;
+    width: 100%;
+    padding: 1rem;
+    height: 300px;
+    max-width: 300px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 2rem;
+    font-size: 1.25rem;
+    text-align: center;
+}
+
+.modal-content button {
+    background-color: var(--primary-color);
+    color: var(--background-color);
+    padding: 0.5rem;
+    border: none;
+    outline: none;
+    width:80px;
+    transition: all 0.1s ease-in-out;
+    -webkit-transition: all 0.1s ease-in-out;
+    -moz-transition: all 0.1s ease-in-out;
+    -ms-transition: all 0.1s ease-in-out;
+    -o-transition: all 0.1s ease-in-out;
+}   
+
+.modal-content button:active {
+    transform: scale(0.95);
+    -webkit-transform: scale(0.95);
+    -moz-transform: scale(0.95);
+    -ms-transform: scale(0.95);
+    -o-transform: scale(0.95);
+}
+
+@media screen and (max-width: 420px) {
+    html {
+        font-size: 80%;
+    }
+    .question {
+        padding: 1rem;
+        max-width:100%;
+        margin: 0.5rem auto;
+    }
 }
