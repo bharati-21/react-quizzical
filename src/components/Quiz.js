@@ -3,153 +3,124 @@ import axios from 'axios';
 import Question from './Question';
 import {nanoid} from 'nanoid';
 import CheckAnswers from './CheckAnswers';
-
+import {Modal} from './Modal';
 
 export default function Quiz() {
-    const [questions, setQuestions] = useState([]);
-    const [options, setOptions] = useState([]);
+    const [quizData, setQuizData] = useState([]);
     const [userAnswers, setUserAnswers] = useState([]);
-    const [correctAnswers, setCorrectAnswers] = useState([]);
-    const [quizEnded, setQuizEnded] = useState(false);
     const [numCorrectAnswers, setNumCorrectAnswers] = useState(0);
-    
-    
+    const [showLoading, setShowLoading] = useState(false);
+    const [showError, setShowError] = useState(false);
+    const [quizEnded, setQuizEnded] = useState(false);
+    const [showModal, setShowModal] = useState(false);
 
-    function fetchData() {
-        axios.get('https://opentdb.com/api.php?amount=10&category=10&type=multiple&encode=base64')
-        .then(res => {
-            const answers = [];
-            const questionsData = [];
-            const optionsData = [];
-            res.data.results.map(result => {
-                const id = nanoid();
-                questionsData.push({
-                    id: id,
-                    question: result.question,
-                })
-                optionsData.push({id: id, options:[result.correct_answer, 
-                    ...result.incorrect_answers]})
-                // userAnswers.push({id: id, option: ''});
-                return answers.push({id: id, option: result.correct_answer});
-            })
-            
-            
-            setOptions(optionsData.map(option => {
-                    return {
-                        id: option.id,
-                        options: option.options.map(opt => {
-                            return {option: opt, isSelected: false}
-                        }),
+    useEffect(() => { 
+        if(quizEnded === false) {      
+            ( async () => {
+                setShowLoading(true);
+                setShowError(false);
+                setUserAnswers([]);
+                try {
+                    const res = await axios.get('https://opentdb.com/api.php?amount=10&category=10&type=multiple&encode=base64');
+
+                    if(res.status >=200 && res.status < 300) {
+                        setQuizData(res.data.results.map(result => {
+                            const id = nanoid();
+                            return {
+                                id,
+                                question: result.question,
+                                correctAnswer: result.correct_answer,
+                                options: [{
+                                    option: result.correct_answer,
+                                    isSelected: false
+                                },
+                                ...result.incorrect_answers.map(option => (
+                                    {option, isSelected: false}
+                                ))]
+                            }
+                        }));
                     }
-                })
-            );
-            setQuestions(questionsData);
-            setCorrectAnswers(answers);
-        })
-    }
-
-    useEffect(() => {       
-        fetchData();
-    }, []);
-
-    function handleUserSelection(event,id) {
-        if(!quizEnded) {
-            if(event.target.classList.contains('option')) {
-                setOptions(oldOptions => oldOptions.map(oldOptions => {
-                    return oldOptions.id === id ? 
-                        {...oldOptions, options: oldOptions.options.map(option => { 
-                            const decodedOption = atob(option.option);
-                            setUserAnswers(oldUserAnswers => [...oldUserAnswers, {id: id, option: btoa(event.target.value)}])
-                            return decodedOption === event.target.value ? 
-                                {...option, isSelected: !option.isSelected} : {...option, isSelected: false};
-                        })}
-                    : oldOptions;
-                }))
-            }
+                    else {
+                        throw new Error('Some error occurred');
+                    }
+                }
+                catch(err) {
+                    console.log(err);
+                    console.log('Some error occurred!');
+                    setShowError(true);
+                }
+                setShowLoading(false);
+            })();
         }
+    }, [quizEnded]);
+
+    const handleUserSelection = (event, id) => {
+        const value = event.target.value;
+        /* 
+            Logic to check if user has contains any question answered. 
+            If yes, then to check if user changed the answer for a previously anwered question
+        */
+        if(userAnswers.length > 0 && userAnswers.find(userAnswer => userAnswer.id === id)) {
+            setUserAnswers(prevUserAnsers => prevUserAnsers.map(userAnswer => userAnswer.id === id ? {...userAnswer, answer: btoa(value)} : {...userAnswer}));
+        }
+        /* Logic if user selects option for a new question */
+        else {
+            setUserAnswers(prevUserAnsers => [...prevUserAnsers, {id, answer: value}]);
+        }  
+        
+        /* Changing the option field if user had the option selected */
+        setQuizData(prevQuizData => prevQuizData.map(prevQuizItem => prevQuizItem.id === id ? 
+            {...prevQuizItem, 
+            options: 
+            prevQuizItem.options.reduce((innerAccum, currentOption) => currentOption.option === btoa(value) ? 
+                    [...innerAccum, {...currentOption, isSelected: !currentOption.isSelected}] 
+                    : 
+                    [...innerAccum, {...currentOption, isSelected: false}], [])
+            } :  {...prevQuizItem}))
     }
 
-    function checkAnswers() {
-        if(quizEnded) {
-            setUserAnswers([]); 
-            setOptions([]);  
-            setQuizEnded(false); 
-            setQuestions([]); 
-            setCorrectAnswers([]);
-            fetchData();
+    const checkAnswers = event => {
+        if(userAnswers.length === quizData.length)  {
+            const correctAnsweredQuestions = quizData.filter(quizItem => userAnswers.find(userAnswer => userAnswer.id === quizItem.id).answer === atob(quizItem.correctAnswer));
+            setNumCorrectAnswers(correctAnsweredQuestions.length);
+            setQuizEnded(true);
         }
         else {
-            const allQuestionsAnswered = userAnswers.every(userAnswer => userAnswer.option);
-            if(allQuestionsAnswered) {
-                check();             
-            }
-            else throwError();
-        }        
+            toggleModal();
+        }
     }
 
-    function check() {
-        userAnswers.forEach(userAnswer => {
-            const id = userAnswer.id;
-            const correctAnswer = correctAnswers.find(answer => answer.id === id);
-           
-            const userOption = userAnswer.option;
-            const correctOption = correctAnswer.option;
-
-            const answeredCorrect = userOption.trim() === correctOption.trim();
-            
-            
-            setOptions(oldOptions => oldOptions.map(oldOption => {
-                return oldOption.id === id ? 
-                {
-                    ...oldOption, 
-                    answeredCorrect: answeredCorrect,
-                    options: answeredCorrect ? 
-                        oldOption.options : 
-                        oldOption.options.map(option => {
-                            return option.isSelected ? 
-                            {
-                                ...option, 
-                                incorrectAnswer: true
-                            } 
-                            : 
-                                option.option === correctOption ? 
-                                {
-                                    ...option, 
-                                    correctAnswer: true
-                                } 
-                                : option
-                        })
-                } 
-                : oldOption
-            }))           
-        })     
-        setQuizEnded(true);                     
+    const toggleModal = () => {
+        console.log(showModal);
+        setShowModal(prevShowModal => !prevShowModal);
     }
 
-    function throwError() {
-        alert('Answer all questions!');
+    const handleRetakeQuiz = event => {
+        setQuizEnded(false);
     }
-
+    
     return (
-        <section className="quiz-page">
+        <section className={`quiz-page`}>
+            {showModal && <Modal toggleModal={toggleModal} />}
+            {showLoading && <h1>Loading Questions...</h1>}
+            {showError && <h1>Error occurred while fetching questions</h1>}
             {
-                questions.map(question => {
+                !showLoading && 
+                quizData.map(quizItem => {
                     return <Question 
-                        key={question.id} 
-                        id={question.id} 
-                        options={options.find(option => option.id === question.id)}
-                        question={question.question}
+                        key={quizItem.id} 
+                        quizItem={quizItem}
+                        handleUserSelection={handleUserSelection}
                         quizEnded={quizEnded}
-                        handleUserSelection={(event) => handleUserSelection(event,question.id)}
                     />
                 })
             }
             <div className="quiz-page--button-container">
-                {
-                    quizEnded ? 
-                        <CheckAnswers options={options} setNumCorrectAnswers={setNumCorrectAnswers} numCorrectAnswers={numCorrectAnswers} checkAnswers={checkAnswers}/> 
+            {
+                quizEnded ? 
+                    <CheckAnswers numCorrectAnswers={numCorrectAnswers} handleRetakeQuiz={handleRetakeQuiz}/> 
                     : 
-                        questions.length > 0 && <button className='btn btn-check' onClick={checkAnswers}>Check Anwers</button>
+                    (!showLoading && !showError) &&<button className='btn btn-check' onClick={checkAnswers}>Check Anwers</button>
                 }
             </div> 
         </section>
